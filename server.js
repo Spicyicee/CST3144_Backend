@@ -1,5 +1,7 @@
+
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
 const app = express();
 
 app.use(express.json());
@@ -45,11 +47,18 @@ app.get('/collection/:collectionName', (req, res, next) => {
     });
 });
 
-// Insert document into collection
 app.post('/collection/:collectionName', (req, res, next) => {
     req.collection.insert(req.body, (e, results) => {
         if (e) return next(e);
         res.send(results.ops);
+    });
+});
+
+// Get single document by ID
+app.get('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.findOne({_id: new ObjectID(req.params.id)}, (e, result) => {
+        if (e) return next(e);
+        res.send(result);
     });
 });
 
