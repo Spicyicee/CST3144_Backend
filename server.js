@@ -1,4 +1,3 @@
-
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -54,12 +53,24 @@ app.post('/collection/:collectionName', (req, res, next) => {
     });
 });
 
-// Get single document by ID
 app.get('/collection/:collectionName/:id', (req, res, next) => {
     req.collection.findOne({_id: new ObjectID(req.params.id)}, (e, result) => {
         if (e) return next(e);
         res.send(result);
     });
+});
+
+// Update document by ID
+app.put('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.update(
+        {_id: new ObjectID(req.params.id)},
+        {$set: req.body},
+        {safe: true, multi: false},
+        (e, result) => {
+            if (e) return next(e);
+            res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'});
+        }
+    );
 });
 
 const port = process.env.PORT || 3000;
