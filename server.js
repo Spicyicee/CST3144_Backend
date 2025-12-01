@@ -1,3 +1,4 @@
+
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -53,6 +54,45 @@ app.post('/collection/:collectionName', (req, res, next) => {
     });
 });
 
+// Search endpoint with regex filtering
+app.get('/collection/:collectionName/search/:query', (req, res, next) => {
+    const searchQuery = req.params.query;
+    
+    console.log('=================================');
+    console.log('SEARCH REQUEST RECEIVED');
+    console.log('Collection:', req.params.collectionName);
+    console.log('Search Query:', searchQuery);
+    console.log('Timestamp:', new Date().toLocaleString());
+    console.log('=================================');
+    
+    const filter = {
+        $or: [
+            { subject: { $regex: searchQuery, $options: 'i' } },
+            { location: { $regex: searchQuery, $options: 'i' } }
+        ]
+    };
+    
+    req.collection.find(filter).toArray((e, results) => {
+        if (e) {
+            console.error('Search Error:', e);
+            return next(e);
+        }
+        
+        console.log(`Found ${results.length} result(s)`);
+        if (results.length > 0) {
+            console.log('Results:');
+            results.forEach((result, index) => {
+                console.log(`  ${index + 1}. ${result.subject} - ${result.location}`);
+            });
+        } else {
+            console.log('No results found');
+        }
+        console.log('=================================\n');
+        
+        res.send(results);
+    });
+});
+
 app.get('/collection/:collectionName/:id', (req, res, next) => {
     req.collection.findOne({_id: new ObjectID(req.params.id)}, (e, result) => {
         if (e) return next(e);
@@ -60,7 +100,6 @@ app.get('/collection/:collectionName/:id', (req, res, next) => {
     });
 });
 
-// Update document by ID
 app.put('/collection/:collectionName/:id', (req, res, next) => {
     req.collection.update(
         {_id: new ObjectID(req.params.id)},
