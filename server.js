@@ -1,4 +1,3 @@
-
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -9,7 +8,7 @@ app.use(express.json());
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT,DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers');
     next();
 });
@@ -54,7 +53,6 @@ app.post('/collection/:collectionName', (req, res, next) => {
     });
 });
 
-// Search endpoint with regex filtering
 app.get('/collection/:collectionName/search/:query', (req, res, next) => {
     const searchQuery = req.params.query;
     
@@ -105,6 +103,17 @@ app.put('/collection/:collectionName/:id', (req, res, next) => {
         {_id: new ObjectID(req.params.id)},
         {$set: req.body},
         {safe: true, multi: false},
+        (e, result) => {
+            if (e) return next(e);
+            res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'});
+        }
+    );
+});
+
+
+app.delete('/collection/:collectionName/:id', (req, res, next) => {
+    req.collection.deleteOne(
+        {_id: new ObjectID(req.params.id)},
         (e, result) => {
             if (e) return next(e);
             res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'});
