@@ -38,11 +38,18 @@ app.param('collectionName', (req, res, next, collectionName) => {
     return next();
 });
 
-// Retrieve all documents from a collection
 app.get('/collection/:collectionName', (req, res, next) => {
     req.collection.find({}).toArray((e, results) => {
         if (e) return next(e);
         res.send(results);
+    });
+});
+
+// Insert document into collection
+app.post('/collection/:collectionName', (req, res, next) => {
+    req.collection.insert(req.body, (e, results) => {
+        if (e) return next(e);
+        res.send(results.ops);
     });
 });
 
