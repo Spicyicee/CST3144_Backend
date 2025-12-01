@@ -23,7 +23,6 @@ MongoClient.connect('mongodb+srv://mindhadi5_db_user:Password@cluster0.289bhfc.m
     console.log('Connected to MongoDB');
 });
 
-// Logger middleware
 app.use((req, res, next) => {
     console.log('Request IP:', req.url);
     console.log('Request date:', new Date());
@@ -37,6 +36,14 @@ app.get('/', (req, res) => {
 app.param('collectionName', (req, res, next, collectionName) => {
     req.collection = db.collection(collectionName);
     return next();
+});
+
+// Retrieve all documents from a collection
+app.get('/collection/:collectionName', (req, res, next) => {
+    req.collection.find({}).toArray((e, results) => {
+        if (e) return next(e);
+        res.send(results);
+    });
 });
 
 const port = process.env.PORT || 3000;
