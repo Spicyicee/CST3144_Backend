@@ -4,7 +4,6 @@ const app = express();
 
 app.use(express.json());
 
-// CORS middleware
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -24,8 +23,20 @@ MongoClient.connect('mongodb+srv://mindhadi5_db_user:Password@cluster0.289bhfc.m
     console.log('Connected to MongoDB');
 });
 
+// Logger middleware
+app.use((req, res, next) => {
+    console.log('Request IP:', req.url);
+    console.log('Request date:', new Date());
+    next();
+});
+
 app.get('/', (req, res) => {
     res.send('Select a collection, e.g., /collection/messages');
+});
+
+app.param('collectionName', (req, res, next, collectionName) => {
+    req.collection = db.collection(collectionName);
+    return next();
 });
 
 const port = process.env.PORT || 3000;
