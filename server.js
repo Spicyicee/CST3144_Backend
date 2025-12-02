@@ -14,10 +14,14 @@ app.use((req, res, next)=>{
     next();
  
 });
+const path = require('path');
+const fs = require('fs');
+
+
  
 let db;
  
-MongoClient.connect('mongodb+srv://mindhadi5_db_user:Password@cluster0.289bhfc.mongodb.net', (err, client)=>{
+MongoClient.connect('mongodb+srv://mindhadi5_db_user:Password@cluster0.289bhfc.mongodb.net/', (err, client)=>{
     db=client.db('webstore');
 });
  
@@ -25,6 +29,24 @@ app.use(function(req, res, next) {
     console.log("Request IP: " + req.url);
     console.log("Request date: " + new Date());
     next();
+});
+
+// STATIC FILE MIDDLEWARE FOR IMAGES
+app.get('/images/:imageName', (req, res) => {
+    const imageName = req.params.imageName;
+
+    // 🟢 Correct absolute path to the /images folder next to server.js
+    const imagePath = path.join(__dirname, "images", imageName);
+
+    fs.access(imagePath, fs.constants.F_OK, err => {
+        if (err) {
+            return res.status(404).json({
+                error: `Image "${imageName}" not found`
+            });
+        }
+
+        res.sendFile(imagePath);
+    });
 });
 
 app.get('/', (req, res, next)=>{
