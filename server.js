@@ -135,7 +135,7 @@ app.put('/collection/:collectionName/:id', (req, res, next)=>{
 });
 
 // delete a document
-app.delete('/collection/:collectionName/:id', (req, res, next) => { 
+app.delete('/collection/:collectionName/:id', (req, res, next) => { // DELETE DOCUMENT BY ID
     req.collection.deleteOne( {_id: ObjectID(req.params.id)},
        (e, result) => { if (e) return next(e) 
         res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'}) }) })
