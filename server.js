@@ -3,19 +3,18 @@ const app = express();
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID= require('mongodb').ObjectID;
  
-app.use(express.json());
-// app.set('port', 3000)
-app.use((req, res, next)=>{
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    res.setHeader('Access-Control-Allow-Credentials', 'true')
-    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT');
+app.use(express.json()); 
+app.use((req, res, next)=>{ // CORS HEADERS MIDDLEWARE
+    res.setHeader('Access-Control-Allow-Origin', '*') // Allow all origins
+    res.setHeader('Access-Control-Allow-Credentials', 'true') 
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT'); // Allow these methods
     res.setHeader('Access-Control-Allow-Headers', "Access-Control-Allow-Headers, Origin ,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
  
     next();
  
 });
-const path = require('path');
-const fs = require('fs');
+const path = require('path'); // file and directory path utilities
+const fs = require('fs'); // file system module
 
 
  
@@ -25,9 +24,9 @@ MongoClient.connect('mongodb+srv://mindhadi5_db_user:Password@cluster0.289bhfc.m
     db=client.db('webstore');
 });
  
-app.use(function(req, res, next) {
-    console.log("Request IP: " + req.url);
-    console.log("Request date: " + new Date());
+app.use(function(req, res, next) { // LOGGING MIDDLEWARE
+    console.log("Request IP: " + req.url); // Log the request URL
+    console.log("Request date: " + new Date()); // Log the request date and time
     next();
 });
 
@@ -35,24 +34,27 @@ app.use(function(req, res, next) {
 app.get('/images/:imageName', (req, res) => {
     const imageName = req.params.imageName;
 
-    // 🟢 Correct absolute path to the /images folder next to server.js
+  // Construct the full path to the image
     const imagePath = path.join(__dirname, "images", imageName);
 
+    // Check if the file exists
     fs.access(imagePath, fs.constants.F_OK, err => {
         if (err) {
             return res.status(404).json({
                 error: `Image "${imageName}" not found`
             });
         }
-
+    // Send the image file
         res.sendFile(imagePath);
     });
 });
 
-app.get('/', (req, res, next)=>{
+// default route
+app.get('/', (req, res, next)=>{ // 
     res.send('Select a collection, e.g., /collection/messages')
 });
  
+// middleware to extract collection name from the URL
 app.param('collectionName', (req, res, next, collectionName)=>{
     req.collection = db.collection(collectionName)
     return next();
@@ -68,10 +70,9 @@ app.get('/collection/:collectionName', (req, res,next)=>{
 });
 
 app.post('/collection/:collectionName', (req, res, next)=>{
-    req.collection.insert(req.body, (e, results)=>{
+    req.collection.insertOne(req.body, (e, result)=>{  
         if (e) return next(e)
-        res.send(results.ops)
-
+        res.send(result.ops || [result])  // Handle both old and new driver formats
     })
 });
 
@@ -87,7 +88,7 @@ app.get('/collection/:collectionName/search/:query', (req, res, next) => {
     
     const filter = {
         $or: [
-            { subject: { $regex: searchQuery, $options: 'i' } },
+            { subject: { $regex: searchQuery, $options: 'i' } },// partial matching, Case-insensitive search
             { location: { $regex: searchQuery, $options: 'i' } }
         ]
     };
@@ -113,7 +114,7 @@ app.get('/collection/:collectionName/search/:query', (req, res, next) => {
     });
 });
 
-
+// retrieve a single document by id
 app.get('/collection/:collectionName/:id', (req, res, next)=>{
     req.collection.findOne({_id: new ObjectID(req.params.id)}, (e, result)=>{
         if (e) return next(e)
@@ -121,23 +122,27 @@ app.get('/collection/:collectionName/:id', (req, res, next)=>{
     })
 });
 
+// update a document
 app.put('/collection/:collectionName/:id', (req, res, next)=>{
-    req.collection.update({
-        _id: new ObjectID(req.params.id)},
+    req.collection.updateOne(
+        {_id: new ObjectID(req.params.id)},
         {$set: req.body},
-        {safe: true, multi: false}, (e, result)=>{
+        (e, result)=>{
             if (e) return next(e)
-            res.send((result.result.n===1)?{msg: 'success'}:{msg: 'error'})
-        })
+            res.send((result.modifiedCount === 1) ? {msg: 'success'} : {msg: 'error'})
+        }
+    )
 });
 
-app.delete('/collectione/:collectionName/:id', (req, res, next) => { 
+// delete a document
+app.delete('/collection/:collectionName/:id', (req, res, next) => { 
     req.collection.deleteOne( {_id: ObjectID(req.params.id)},
        (e, result) => { if (e) return next(e) 
         res.send((result.result.n === 1) ? {msg: 'success'} : {msg: 'error'}) }) })
  
 
-const port = process.env.PORT || 3000;
+        // start the server
+const port = process.env.PORT || 3000;// process.env.PORT for production environment
 app.listen(port,()=>{
     console.log("Express.js server running at localhost:3000")
 })
