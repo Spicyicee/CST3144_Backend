@@ -70,8 +70,8 @@ app.get('/collection/:collectionName', (req, res,next)=>{
 });
 
 app.post('/collection/:collectionName', (req, res, next)=>{
-    req.collection.insertOne(req.body, (e, result)=>{  
-        if (e) return next(e)
+    req.collection.insertOne(req.body, (e, result)=>{  // insertOne for single document
+        if (e) return next(e)   
         res.send(result.ops || [result])  // Handle both old and new driver formats
     })
 });
